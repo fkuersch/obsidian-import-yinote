@@ -15,7 +15,6 @@ moment.js format: https://momentjs.com/docs/#/displaying/format/
 
 */
 
-// todo: remove todos
 // todo: docs
 
 const LOGLEVEL_SILENT = 0;
@@ -245,13 +244,13 @@ async function download_oembed_registry_if_required(tp, oembed_registry_path, oe
 
     const exists = stat !== null
     if(exists) {
-        const now_timestamp = (+ new Date());
+        const now_timestamp = Date.now();
         const moment_last_updated = moment(stat.mtime);
         moment_last_updated.locale('en');
         log(`oembed registry last updated: ${moment_last_updated.fromNow()}`, LOGLEVEL_DEBUG);
         log(`cache time for oembed registry: ${oembed_registry_cache_days} days`, LOGLEVEL_DEBUG);
-        const cache_days_ago_timestamp = now_timestamp - oembed_registry_cache_days * 24 * 3600;
-        if(stat.mtime >= cache_days_ago_timestamp) { // todo: check
+        const cache_days_ago_timestamp = now_timestamp - oembed_registry_cache_days * 24 * 3600 * 1000;
+        if(stat.mtime >= cache_days_ago_timestamp) {
             log("oembed registry update not required", LOGLEVEL_DEBUG);
             return;
         }
