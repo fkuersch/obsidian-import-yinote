@@ -17,7 +17,6 @@ moment.js format: https://momentjs.com/docs/#/displaying/format/
 
 // todo: test with different sources (twitter, vimeo, twitch)
 // todo: test without oembed (custom web site)
-// todo: conditional note image (based on custom keywords, screenshot noimage yesimage)
 // todo: remove todos
 // todo: docs
 
@@ -35,6 +34,8 @@ async function import_yinote(
         title_template = "{{#meta}}{{title}} on {{provider}}{{/meta}}{{#oembed}} by {{author_name}}{{/oembed}}",
         make_images_available_offline = true,
         images_directory = "assets/yinote", // todo ""
+        conditional_image_keywords = ["screenshot", "freeze frame", "still frame", "saveimage"],
+        conditional_image_keywords_is_blacklist = false,
         yinote_id_frontmatter_key = "yinote_id",
         custom_created_date_format = "L LT",
         delete_json = true,
@@ -68,8 +69,9 @@ async function import_yinote(
             }
             let image_urls_by_local_path;
             if(make_images_available_offline) {
-                image_urls_by_local_path = await create_paths_for_local_images(tp, yinote, images_directory);
+                image_urls_by_local_path = create_paths_for_local_images(tp, yinote, images_directory);
             }
+            create_conditional_images_for_notes(yinote.notes, conditional_image_keywords, conditional_image_keywords_is_blacklist);
             compose_file_title(yinote, title_template);
             log("yinote is ready for being inserted into the template:");
             log(yinote, LOGLEVEL_INFO, true);
@@ -309,7 +311,7 @@ async function download_json(json_url, tp) {
     return json;
 }
 
-async function create_paths_for_local_images(tp, yinote, images_dir) {
+function create_paths_for_local_images(tp, yinote, images_dir) {
     let urls_by_local_path = {
         ...create_image_path_in_obj(tp, yinote.meta, "meta", "image", yinote.id, images_dir),
         ...create_image_path_in_obj(tp, yinote.meta, "meta", "icon", yinote.id, images_dir),
@@ -422,6 +424,29 @@ async function download_image(tp, url, local_path) {
 async function write_arraybuffer_to_disk(tp, array_buffer, local_path) {
     log(`writing to disk: '${local_path}'`, LOGLEVEL_DEBUG);
     await app.vault.adapter.writeBinary(local_path, array_buffer);
+}
+
+function create_conditional_images_for_notes(notes, keywords, is_blacklist) {
+    log("creating conditional images")
+    for(const note of notes) {
+        const keyword_present = is_any_keyword_in_text(keywords, note.content);
+        const create_conditional_image = is_blacklist ? !keyword_present : keyword_present;
+        if(create_conditional_image) {
+            note.conditional_image = {
+                "image": note.image,
+                "image_local": note.image_local
+            }
+        }
+    }
+}
+
+function is_any_keyword_in_text(keyword_list, text) {
+    for(const keyword of keyword_list) {
+        if(text.indexOf(keyword) >= 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function populate_moustachelike_template(template, yinote) {
