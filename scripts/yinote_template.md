@@ -1,6 +1,7 @@
 ---
 created: {{createdAt_utc_isostring}}
 yinote_id: {{id}}
+{{#oembed}}author_name: {{author_name}}{{/oembed}}
 ---
 {{#meta}}
 # {{title}}

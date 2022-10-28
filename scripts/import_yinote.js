@@ -18,7 +18,6 @@ moment.js format: https://momentjs.com/docs/#/displaying/format/
 // todo: test with different sources (twitter, vimeo, twitch)
 // todo: test without oembed (custom web site)
 // todo: conditional note image (based on custom keywords, screenshot noimage yesimage)
-// todo: use moustache & oembed in file title
 // todo: remove todos
 // todo: docs
 
@@ -33,7 +32,7 @@ let CURRENT_LOG_LEVEL = LOGLEVEL_INFO;
 async function import_yinote(
         tp,
         note_template_path = "scripts/yinote_template.md",
-        title_template = "{{title}} - {{provider}}",
+        title_template = "{{#meta}}{{title}} on {{provider}}{{/meta}}{{#oembed}} by {{author_name}}{{/oembed}}",
         make_images_available_offline = true,
         images_directory = "assets/yinote", // todo ""
         yinote_id_frontmatter_key = "yinote_id",
@@ -52,7 +51,6 @@ async function import_yinote(
         const yinote_path = get_path_for_link(yinote_link, tp);
         log(`importing '${yinote_path}'`);
         const yinote_json = await get_json_for_path(yinote_path);
-        compose_title_for_all_notes(title_template, yinote_json);
         filter_notes_by_provider(yinote_json, filter_provider);
         await remove_already_imported_yinotes(yinote_json, yinote_id_frontmatter_key);
 
@@ -72,6 +70,7 @@ async function import_yinote(
             if(make_images_available_offline) {
                 image_urls_by_local_path = await create_paths_for_local_images(tp, yinote, images_directory);
             }
+            compose_file_title(yinote, title_template);
             log("yinote is ready for being inserted into the template:");
             log(yinote, LOGLEVEL_INFO, true);
             const md_content = populate_moustachelike_template(template, yinote);
@@ -138,29 +137,6 @@ async function get_json_for_path(path) {
         throw `Unable to parse JSON at\n'${link}'.`;
     }
     return j;
-}
-
-function compose_title_for_all_notes(title_template, j) {
-    for(let yinote of j.data) {
-        yinote.file_title = compose_title(title_template, yinote);
-    }
-}
-
-function compose_title(title_template, yinote) {
-    let new_title = title_template;
-    for(const [key, value] of Object.entries(yinote.meta)) {
-        new_title = new_title.replaceAll(`{{${key}}}`, value);
-    }
-    new_title = sanitize_file_title(new_title);
-    return new_title;
-}
-
-function sanitize_file_title(title) {
-    let sanitized_title = title;
-    sanitized_title = sanitized_title.replaceAll("\\", "-");
-    sanitized_title = sanitized_title.replaceAll("/", "-");
-    sanitized_title = sanitized_title.replaceAll(":", "-");
-    return sanitized_title;
 }
 
 function filter_notes_by_provider(yinote_json, provider) {
@@ -507,6 +483,19 @@ function get_next_section(template) {
 
 function replace_substring(original, start, end, replacement) {
     return original.substring(0, start) + replacement + original.substring(end, original.length);
+}
+
+function compose_file_title(yinote, title_template) {
+    let file_title = populate_moustachelike_template(title_template, yinote);
+    yinote.file_title = sanitize_file_title(file_title);
+}
+
+function sanitize_file_title(title) {
+    let sanitized_title = title;
+    sanitized_title = sanitized_title.replaceAll("\\", "-");
+    sanitized_title = sanitized_title.replaceAll("/", "-");
+    sanitized_title = sanitized_title.replaceAll(":", "-");
+    return sanitized_title;
 }
 
 function populate_yinote_with_created_time(yinote, format) {
