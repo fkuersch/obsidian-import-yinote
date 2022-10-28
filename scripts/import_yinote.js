@@ -1,7 +1,15 @@
 /*
+version: 0.0.1
+source, docs & updates: https://github.com/fkuersch/obsidian-import-yinote
+
 docs:
 
+install:
+templater: enable js?!
+dataview
+
 oembed parameters: depending on provider, see: https://oembed.com/#section2.3
+cmd+alt+i -> dev console
 
 moment.js format: https://momentjs.com/docs/#/displaying/format/
 
@@ -15,6 +23,7 @@ moment.js format: https://momentjs.com/docs/#/displaying/format/
 // todo: use moustache & oembed in file title
 // todo: option to filter by provider: only_provider
 // todo: remove todos
+// todo: log levels
 // todo: docs
 
 async function import_yinote(
@@ -22,7 +31,8 @@ async function import_yinote(
         note_template_path = "scripts/yinote_template.md",
         title_template = "{{title}} - {{provider}}",
         save_images_to_directory = "assets/yinote", // todo null/false
-        created_date_format = "L LT",
+        yinote_id_frontmatter_key = "yinote_id",
+        custom_created_date_format = "L LT",
         delete_json = true,
         delete_permanently = false,
         delete_only_if_all_imported = false,
@@ -35,7 +45,7 @@ async function import_yinote(
         log(`importing '${yinote_path}'`);
         const yinote_json = await get_json_for_path(yinote_path);
         compose_title_for_all_notes(title_template, yinote_json);
-        await remove_existing_yinotes(yinote_json, tp);
+        await remove_already_imported_yinotes(yinote_json, yinote_id_frontmatter_key);
 
         if(!yinote_json.data.length) {
             log("all notes already imported");
@@ -44,7 +54,7 @@ async function import_yinote(
             sort_yinotes_by_created_timestamp_desc(yinote_json);
             const yinote = await let_user_select_note(tp, yinote_json);
             log(`user selected '${yinote.meta.title}'`);
-            populate_yinote_with_created_time(yinote, created_date_format);
+            populate_yinote_with_created_time(yinote, custom_created_date_format);
             populate_yinote_with_timestamps(yinote);
             const template = await get_template_from_file(note_template_path);
             if(template.includes("{{#oembed}}")) {
@@ -135,15 +145,27 @@ function sanitize_file_title(title) {
     return sanitized_title;
 }
 
-async function remove_existing_yinotes(j, tp) {
-    let i = j.data.length;
+async function remove_already_imported_yinotes(yinote_json, yinote_id_frontmatter_key) {
+    let i = yinote_json.data.length;
     while (i--) {
-        const normalized_path = tp.obsidian.normalizePath(`${j.data[i].file_title}.md`);
-        const exists = await app.vault.exists(normalized_path);
-        if(exists) {
-            j.data.splice(i, 1);
+        if(await note_exists(yinote_id_frontmatter_key, yinote_json.data[i].id)) {
+            log(`already imported: '${yinote_json.data[i].meta.title}'`);
+            yinote_json.data.splice(i, 1);
         }
     }
+}
+
+async function note_exists(yinote_id_frontmatter_key, yinote_id) {
+    if(!is_dataview_installed()) {
+        return false;
+    }
+    let pages_with_matching_yinote_id = await app.plugins.plugins.dataview.api.pages()
+        .where(p => p[yinote_id_frontmatter_key] == yinote_id);
+    return !!pages_with_matching_yinote_id.length;
+}
+
+function is_dataview_installed() {
+    return !!app.plugins.plugins.dataview;
 }
 
 function sort_yinotes_by_created_timestamp_desc(j) {
