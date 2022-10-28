@@ -19,7 +19,6 @@ moment.js format: https://momentjs.com/docs/#/displaying/format/
 // todo: test without oembed (custom web site)
 // todo: conditional note image (based on custom keywords, screenshot noimage yesimage)
 // todo: use moustache & oembed in file title
-// todo: option to filter by provider: only_provider
 // todo: remove todos
 // todo: docs
 
@@ -42,6 +41,7 @@ async function import_yinote(
         delete_json = true,
         delete_permanently = false,
         delete_only_if_all_imported = false,
+        filter_provider = null,
         oembed_registry_path = "scripts/oembed_registry.json",
         oembed_registry_cache_days = 7,
         loglevel = LOGLEVEL_DEBUG) { // todo: info
@@ -53,6 +53,7 @@ async function import_yinote(
         log(`importing '${yinote_path}'`);
         const yinote_json = await get_json_for_path(yinote_path);
         compose_title_for_all_notes(title_template, yinote_json);
+        filter_notes_by_provider(yinote_json, filter_provider);
         await remove_already_imported_yinotes(yinote_json, yinote_id_frontmatter_key);
 
         if(!yinote_json.data.length) {
@@ -160,6 +161,22 @@ function sanitize_file_title(title) {
     sanitized_title = sanitized_title.replaceAll("/", "-");
     sanitized_title = sanitized_title.replaceAll(":", "-");
     return sanitized_title;
+}
+
+function filter_notes_by_provider(yinote_json, provider) {
+    if(!provider) {
+        return;
+    }
+    log(`removing notes that are not from provider '${provider}'`, LOGLEVEL_DEBUG);
+    const filter_provider = provider.toLowerCase();
+    let i = yinote_json.data.length;
+    while (i--) {
+        const note_provider = yinote_json.data[i].meta?.provider.toLowerCase();
+        if(note_provider !== filter_provider) {
+            log(`not from ${provider}: '${yinote_json.data[i].meta.title}'`, LOGLEVEL_DEBUG);
+            yinote_json.data.splice(i, 1);
+        }
+    }
 }
 
 async function remove_already_imported_yinotes(yinote_json, yinote_id_frontmatter_key) {
