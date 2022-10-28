@@ -15,6 +15,7 @@ moment.js format: https://momentjs.com/docs/#/displaying/format/
 
 */
 
+// todo: template based on provider
 // todo: remove todos
 // todo: docs
 
@@ -26,12 +27,12 @@ const LOGLEVEL_DEBUG = 4;
 let CURRENT_LOG_LEVEL = LOGLEVEL_INFO;
 
 
-async function import_yinote(
+async function import_yinote({
         tp,
         note_template_path = "scripts/yinote_template.md",
         title_template = "{{#meta}}{{provider}} - {{/meta}}{{#oembed}}{{author_name}} - {{/oembed}}{{#meta}}{{title}}{{/meta}}",
         make_images_available_offline = true,
-        images_directory = "assets/yinote", // todo ""
+        images_directory = "",
         conditional_image_keywords = ["screenshot", "screen shot", "freeze frame", "still frame", "saveimage"],
         conditional_image_keywords_is_blacklist = false,
         yinote_id_frontmatter_key = "yinote_id",
@@ -42,7 +43,7 @@ async function import_yinote(
         filter_provider = null,
         oembed_registry_path = "scripts/oembed_registry.json",
         oembed_registry_cache_days = 7,
-        loglevel = LOGLEVEL_DEBUG) { // todo: info
+        loglevel = LOGLEVEL_INFO}={}) {
 
     try {
         CURRENT_LOG_LEVEL = loglevel;
@@ -203,6 +204,8 @@ async function populate_yinote_with_oembed_data(yinote, tp, oembed_registry_path
         return;
     }
     const oembed_data = await download_json(oembed_url, tp);
+    log("oembed data:", LOGLEVEL_DEBUG);
+    log(oembed_data, LOGLEVEL_DEBUG, true);
     yinote.oembed = oembed_data;
 }
 
@@ -323,6 +326,7 @@ function create_paths_for_local_images(tp, yinote, images_dir) {
         ...create_image_path_in_obj(tp, yinote.meta, "meta", "image", yinote.id, images_dir),
         ...create_image_path_in_obj(tp, yinote.meta, "meta", "icon", yinote.id, images_dir),
         ...create_image_path_in_obj(tp, yinote.oembed, "oembed", "thumbnail_url", yinote.id, images_dir),
+        ...create_image_path_in_obj(tp, yinote.oembed, "oembed", "thumbnail_url_with_play_button", yinote.id, images_dir),
         ...create_image_path_in_obj_list(tp, yinote.notes, "notes", "image", yinote.id, images_dir)
     };
     log("download urls by local path:", LOGLEVEL_DEBUG);
