@@ -1,0 +1,1 @@
+<%* tp.user.import_yinote(tp) _%>
