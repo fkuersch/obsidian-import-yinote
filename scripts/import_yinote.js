@@ -17,13 +17,10 @@ moment.js format: https://momentjs.com/docs/#/displaying/format/
 
 // todo: test with different sources (twitter, vimeo, twitch)
 // todo: test without oembed (custom web site)
-// todo: recognize existing notes by yinote_id frontmatter
-// todo: save image only if it is used in md
 // todo: conditional note image (based on custom keywords, screenshot noimage yesimage)
 // todo: use moustache & oembed in file title
 // todo: option to filter by provider: only_provider
 // todo: remove todos
-// todo: log levels
 // todo: docs
 
 const LOGLEVEL_SILENT = 0;
@@ -38,7 +35,8 @@ async function import_yinote(
         tp,
         note_template_path = "scripts/yinote_template.md",
         title_template = "{{title}} - {{provider}}",
-        save_images_to_directory = "assets/yinote", // todo null/false
+        make_images_available_offline = true,
+        images_directory = "assets/yinote", // todo ""
         yinote_id_frontmatter_key = "yinote_id",
         custom_created_date_format = "L LT",
         delete_json = true,
@@ -63,19 +61,22 @@ async function import_yinote(
         } else {
             sort_yinotes_by_created_timestamp_desc(yinote_json);
             const yinote = await let_user_select_note(tp, yinote_json);
-            log(`user selected '${yinote.meta.title}'`);
             populate_yinote_with_created_time(yinote, custom_created_date_format);
             populate_yinote_with_timestamps(yinote);
             const template = await get_template_from_file(note_template_path);
             if(template.includes("{{#oembed}}")) {
                 await populate_yinote_with_oembed_data(yinote, tp, oembed_registry_path, oembed_registry_cache_days);
             }
-            if(save_images_to_directory) {
-                await save_all_images_to_directory(tp, yinote, save_images_to_directory);
+            let image_urls_by_local_path;
+            if(make_images_available_offline) {
+                image_urls_by_local_path = await create_paths_for_local_images(tp, yinote, images_directory);
             }
             log("yinote is ready for being inserted into the template:");
             log(yinote, LOGLEVEL_INFO, true);
             const md_content = populate_moustachelike_template(template, yinote);
+            if(make_images_available_offline) {
+                await save_images_if_linked_in_page(tp, md_content, image_urls_by_local_path);
+            }
             await write_content(md_content, tp);
             await rename_md_file(yinote, tp);
         }
@@ -162,6 +163,7 @@ function sanitize_file_title(title) {
 }
 
 async function remove_already_imported_yinotes(yinote_json, yinote_id_frontmatter_key) {
+    log("removing already imported notes", LOGLEVEL_DEBUG);
     let i = yinote_json.data.length;
     while (i--) {
         if(await note_exists(yinote_id_frontmatter_key, yinote_json.data[i].id)) {
@@ -189,9 +191,11 @@ function sort_yinotes_by_created_timestamp_desc(j) {
 }
 
 async function let_user_select_note(tp, j) {
-    return tp.system.suggester(
+    const yinote = await tp.system.suggester(
         (item) => `"${item.meta.title}" on ${item.meta.provider} (${moment(item.createdAt).fromNow()})`, 
         j.data, true, "");
+    log(`user selected '${yinote.meta.title}'`);
+    return yinote;
 }
 
 async function get_template_from_file(template_path) {
@@ -254,7 +258,7 @@ async function download_oembed_registry_if_required(tp, oembed_registry_path, oe
         log(`oembed registry last updated: ${moment_last_updated.fromNow()}`, LOGLEVEL_DEBUG);
         log(`cache time for oembed registry: ${oembed_registry_cache_days} days`, LOGLEVEL_DEBUG);
         const cache_days_ago_timestamp = now_timestamp - oembed_registry_cache_days * 24 * 3600;
-        if(stat.mtime >= cache_days_ago_timestamp) {
+        if(stat.mtime >= cache_days_ago_timestamp) { // todo: check
             log("oembed registry update not required", LOGLEVEL_DEBUG);
             return;
         }
@@ -312,81 +316,61 @@ async function download_json(json_url, tp) {
     return json;
 }
 
-async function save_all_images_to_directory(tp, yinote, download_dir) {
-    log(`saving images to '${download_dir}'`);
-    await save_images_for_all_notes(tp, yinote, download_dir);
-    await save_images_for_meta(tp, yinote, download_dir);
-    await save_images_for_oembed(tp, yinote, download_dir);
+async function create_paths_for_local_images(tp, yinote, images_dir) {
+    let urls_by_local_path = {
+        ...create_image_path_in_obj(tp, yinote.meta, "meta", "image", yinote.id, images_dir),
+        ...create_image_path_in_obj(tp, yinote.meta, "meta", "icon", yinote.id, images_dir),
+        ...create_image_path_in_obj(tp, yinote.oembed, "oembed", "thumbnail_url", yinote.id, images_dir),
+        ...create_image_path_in_obj_list(tp, yinote.notes, "notes", "image", yinote.id, images_dir)
+    };
+    log("download urls by local path:", LOGLEVEL_DEBUG);
+    log(urls_by_local_path, LOGLEVEL_DEBUG, true);
+    return urls_by_local_path;
 }
 
-async function save_images_for_all_notes(tp, yinote, download_dir) {
-    let promises = [];
-    for(const [i, note] of yinote.notes.entries()) {
-        const key = "image";
-        const filename = `yinote_${yinote.id}_note_${i}`;
-        promises.push(provide_local_url_copy_in_obj_for_key(tp, note, key, filename, download_dir));
-    }
-    await Promise.all(promises);
-}
-
-async function save_images_for_meta(tp, yinote, download_dir) {
-    const key = "image";
-    const filename = `yinote_${yinote.id}_meta_image`;
-    await provide_local_url_copy_in_obj_for_key(tp, yinote.meta, key, filename, download_dir);
-}
-
-async function save_images_for_oembed(tp, yinote, download_dir) {
-    const key = "thumbnail_url";
-    const filename = `yinote_${yinote.id}_oembed_thumbnail`;
-    await provide_local_url_copy_in_obj_for_key(tp, yinote.oembed, key, filename, download_dir);
-}
-
-async function provide_local_url_copy_in_obj_for_key(tp, obj, key, filename, download_dir) {
-    // todo: bad name
-    if(obj === undefined) {
+function create_image_path_in_obj(tp, obj, obj_name, image_key, yinote_id, images_dir) {
+    if(!obj) {
         return;
     }
-    const url = obj[key];
-    const normalized_path = await save_image_to_directory(tp, url, filename, download_dir);
-    obj[`${key}_local`] = normalized_path;
-    log(`saved: ${normalized_path}`, LOGLEVEL_DEBUG);
+    const url = obj[image_key];
+    if(!url) {
+        return;
+    }
+    const file_extension = get_file_extension_for_image(url);
+    const filename = `yinote_${yinote_id}_${obj_name}_${image_key}.${file_extension}`;
+    const normalized_path = tp.obsidian.normalizePath(`${images_dir}/${filename}`);
+    obj[`${image_key}_local`] = normalized_path;
+    log(`local path for ${obj_name}.${image_key}: '${normalized_path}'`, LOGLEVEL_DEBUG);
+    return {[normalized_path]: url};
 }
 
-async function save_image_to_directory(tp, url, filename_without_ext, download_dir) {
+function create_image_path_in_obj_list(tp, obj_list, obj_name, image_key, yinote_id, images_dir) {
+    if(!obj_list) {
+        return;
+    }
+    let urls_by_local_path = {};
+    for(const [i, obj] of obj_list.entries()) {
+        urls_by_local_path = {
+            ...urls_by_local_path,
+            ...create_image_path_in_obj(tp, obj, `${obj_name}_${i}`, image_key, yinote_id, images_dir)
+        };
+    }
+    return urls_by_local_path;
+}
+
+function get_file_extension_for_image(url) {
     if(url.indexOf("data") === 0) {
-        return await save_data_url_to_directory(tp, url, filename_without_ext, download_dir);
+        return get_file_extension_from_data_url(url);
     } else if(url.indexOf("http") === 0) {
-        return await download_image(tp, url, filename_without_ext, download_dir);
+        return get_file_extension_from_http_url(url);
     }
-    return null;
-}
-
-async function save_data_url_to_directory(tp, data_url, filename_without_ext, download_dir) {
-    const file_extension = get_file_extension_from_data_url(data_url);
-    const filename = `${filename_without_ext}.${file_extension}`;
-    const response = await fetch(data_url);
-    if (!response.ok) {
-        throw `error while downloading image: ${response.status}`;
-    }
-    const array_buffer = await response.arrayBuffer();
-    return await write_arraybuffer_to_disk(tp, array_buffer, download_dir, filename);
+    log(`unable to get file extension for url: '${url}'`, LOGLEVEL_ERROR);
+    throw `Unable to get file extension for image (see developer console for details)`;
 }
 
 function get_file_extension_from_data_url(url) {
     const ext_regex = RegExp(/^data:image\/([a-z0-9]+);base64,.*/i);
     return get_file_extension_by_regex(ext_regex, url);
-}
-
-async function download_image(tp, url, filename_without_ext, download_dir) {
-    log(`downloading image: ${url}`);
-    const file_extension = get_file_extension_from_http_url(url);
-    const filename = `${filename_without_ext}.${file_extension}`;
-    const response = await tp.obsidian.requestUrl({
-        url: url,
-        throw: true
-    });
-    const array_buffer = response.arrayBuffer;
-    return await write_arraybuffer_to_disk(tp, array_buffer, download_dir, filename);
 }
 
 function get_file_extension_from_http_url(url) {
@@ -403,13 +387,52 @@ function get_file_extension_by_regex(ext_regex, url) {
     return file_extension;
 }
 
-async function write_arraybuffer_to_disk(tp, array_buffer, download_dir, filename) {
-    const normalized_path = tp.obsidian.normalizePath(`${download_dir}/${filename}`);
-    await app.vault.adapter.writeBinary(normalized_path, array_buffer);
-    return normalized_path;
+async function save_images_if_linked_in_page(tp, md_content, image_urls_by_local_path) {
+    for(const [local_path, image_url] of Object.entries(image_urls_by_local_path)) {
+        if(md_content.indexOf(local_path) >= 0) {
+            log(`found image in page: '${local_path}'`, LOGLEVEL_DEBUG);
+            await save_image_to_disk(tp, image_url, local_path);
+        }
+    }
+}
+
+async function save_image_to_disk(tp, url, local_path) {
+    if(url.indexOf("data") === 0) {
+        return await save_data_url_to_disk(tp, url, local_path);
+    } else if(url.indexOf("http") === 0) {
+        return await download_image(tp, url, local_path);
+    }
+    log(`unable to save image: invalid url:`, LOGLEVEL_ERROR);
+    log(url, LOGLEVEL_ERROR, true);
+    throw "unable to save image: invalid url (see developer console for details)";
+}
+
+async function save_data_url_to_disk(tp, data_url, local_path) {
+    const response = await fetch(data_url);
+    if (!response.ok) {
+        throw `error while downloading image: ${response.status}`;
+    }
+    const array_buffer = await response.arrayBuffer();
+    return await write_arraybuffer_to_disk(tp, array_buffer, local_path);
+}
+
+async function download_image(tp, url, local_path) {
+    log(`downloading image: ${url}`);
+    const response = await tp.obsidian.requestUrl({
+        url: url,
+        throw: true
+    });
+    const array_buffer = response.arrayBuffer;
+    return await write_arraybuffer_to_disk(tp, array_buffer, local_path);
+}
+
+async function write_arraybuffer_to_disk(tp, array_buffer, local_path) {
+    log(`writing to disk: '${local_path}'`, LOGLEVEL_DEBUG);
+    await app.vault.adapter.writeBinary(local_path, array_buffer);
 }
 
 function populate_moustachelike_template(template, yinote) {
+    log("populating template");
     return populate_section(template, yinote);
 }
 
