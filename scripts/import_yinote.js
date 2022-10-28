@@ -15,8 +15,6 @@ moment.js format: https://momentjs.com/docs/#/displaying/format/
 
 */
 
-// todo: test with different sources (twitter, vimeo, twitch)
-// todo: test without oembed (custom web site)
 // todo: remove todos
 // todo: docs
 
@@ -31,10 +29,10 @@ let CURRENT_LOG_LEVEL = LOGLEVEL_INFO;
 async function import_yinote(
         tp,
         note_template_path = "scripts/yinote_template.md",
-        title_template = "{{#meta}}{{title}} on {{provider}}{{/meta}}{{#oembed}} by {{author_name}}{{/oembed}}",
+        title_template = "{{#meta}}{{provider}} - {{/meta}}{{#oembed}}{{author_name}} - {{/oembed}}{{#meta}}{{title}}{{/meta}}",
         make_images_available_offline = true,
         images_directory = "assets/yinote", // todo ""
-        conditional_image_keywords = ["screenshot", "freeze frame", "still frame", "saveimage"],
+        conditional_image_keywords = ["screenshot", "screen shot", "freeze frame", "still frame", "saveimage"],
         conditional_image_keywords_is_blacklist = false,
         yinote_id_frontmatter_key = "yinote_id",
         custom_created_date_format = "L LT",
@@ -82,7 +80,7 @@ async function import_yinote(
             await write_content(md_content, tp);
             await rename_md_file(yinote, tp);
         }
-        if(delete_json && (!delete_only_if_all_imported || yinote_json.data.length <= 1)) {
+        if(delete_json && (!delete_only_if_all_imported || yinote_json.data.length <= 1)) { // todo: filter provider could cause a length = 0
             await delete_file(yinote_path, delete_permanently);
         }
     } catch(e) {
@@ -200,6 +198,10 @@ async function get_template_from_file(template_path) {
 async function populate_yinote_with_oembed_data(yinote, tp, oembed_registry_path, oembed_registry_cache_days) {
     log("downloading oembed metadata");
     const oembed_url = await get_oembed_url_for_yinote(yinote, tp, oembed_registry_path, oembed_registry_cache_days);
+    if(!oembed_url) {
+        log("oembed not available for this note");
+        return;
+    }
     const oembed_data = await download_json(oembed_url, tp);
     yinote.oembed = oembed_data;
 }
@@ -217,7 +219,7 @@ async function get_oembed_url_for_yinote(yinote, tp, oembed_registry_path, oembe
         return url_from_registry;
     }
     
-    log("starting oembed discovery", LOGLEVEL_DEBUG);
+    log("starting oembed discovery");
     const discovered_url = await get_oembed_url_from_discovery(yinote, tp);
     if(discovered_url) {
         log(`got oembed url from discovery: ${discovered_url}`, LOGLEVEL_DEBUG);
@@ -270,15 +272,20 @@ async function download_oembed_registry_if_required(tp, oembed_registry_path, oe
 }
 
 async function create_oembed_url_from_registry(yinote, tp, oembed_registry_path) {
-    const oembed_registry = await get_json_for_path(oembed_registry_path);
-    const provider = find_oembed_provider(oembed_registry, yinote.meta.provider);
-    const endpoint = find_oembed_endpoint(provider, yinote.meta.url);
-    const endpoint_url = endpoint.url.replaceAll("{format}", "json");
-    const full_url = endpoint_url + "?" + new URLSearchParams({
-        format: "json",
-        url: yinote.meta.url
-    });
-    return full_url;
+    try {
+        const oembed_registry = await get_json_for_path(oembed_registry_path);
+        const provider = find_oembed_provider(oembed_registry, yinote.meta.provider);
+        const endpoint = find_oembed_endpoint(provider, yinote.meta.url);
+        const endpoint_url = endpoint.url.replaceAll("{format}", "json");
+        const full_url = endpoint_url + "?" + new URLSearchParams({
+            format: "json",
+            url: yinote.meta.url
+        });
+        return full_url;
+    } catch(e) {
+        log(e, LOGLEVEL_INFO);
+        return null;
+    }
 }
 
 function find_oembed_provider(oembed_registry, provider_name) {
@@ -332,7 +339,8 @@ function create_image_path_in_obj(tp, obj, obj_name, image_key, yinote_id, image
         return;
     }
     const file_extension = get_file_extension_for_image(url);
-    const filename = `yinote_${yinote_id}_${obj_name}_${image_key}.${file_extension}`;
+    const dot_file_extension = !!file_extension ? `.${file_extension}` : "";
+    const filename = `yinote_${yinote_id}_${obj_name}_${image_key}${dot_file_extension}`;
     const normalized_path = tp.obsidian.normalizePath(`${images_dir}/${filename}`);
     obj[`${image_key}_local`] = normalized_path;
     log(`local path for ${obj_name}.${image_key}: '${normalized_path}'`, LOGLEVEL_DEBUG);
@@ -359,26 +367,26 @@ function get_file_extension_for_image(url) {
     } else if(url.indexOf("http") === 0) {
         return get_file_extension_from_http_url(url);
     }
-    log(`unable to get file extension for url: '${url}'`, LOGLEVEL_ERROR);
-    throw `Unable to get file extension for image (see developer console for details)`;
+    log(`unknown url format: '${url}'`, LOGLEVEL_WARNING);
+    return null;
 }
 
 function get_file_extension_from_data_url(url) {
-    const ext_regex = RegExp(/^data:image\/([a-z0-9]+);base64,.*/i);
+    const ext_regex = /(?<=^data\:image\/)[a-z0-9]+(?=;base64,.*)/i;
     return get_file_extension_by_regex(ext_regex, url);
 }
 
 function get_file_extension_from_http_url(url) {
-    const ext_regex = RegExp(/^http[s]?:\/\/.*\.([a-z0-9]{1,10})$/i)
+    //const ext_regex = /(?<=\/[^\/\?\:#]+\.)[a-z0-9]{2,5}(?=[^\/]*$)/i;
+    const ext_regex = /(?<=\.)(png|jpg|jpeg)/i;
     return get_file_extension_by_regex(ext_regex, url);
 }
 
 function get_file_extension_by_regex(ext_regex, url) {
-    if(!ext_regex.test(url)) {
-        log(`unable to extract image type from url: ${url}`, LOGLEVEL_ERROR);
-        throw "unable to extract image type from url";
+    const file_extension = ext_regex.exec(url)?.at(0);
+    if(!file_extension) {
+        log(`unable to extract image type from url: ${url}`, LOGLEVEL_WARNING);
     }
-    const file_extension = ext_regex.exec(url)[1];
     return file_extension;
 }
 
