@@ -26,6 +26,14 @@ moment.js format: https://momentjs.com/docs/#/displaying/format/
 // todo: log levels
 // todo: docs
 
+const LOGLEVEL_SILENT = 0;
+const LOGLEVEL_WARNING = 1;
+const LOGLEVEL_ERROR = 2;
+const LOGLEVEL_INFO = 3;
+const LOGLEVEL_DEBUG = 4;
+let CURRENT_LOG_LEVEL = LOGLEVEL_INFO;
+
+
 async function import_yinote(
         tp,
         note_template_path = "scripts/yinote_template.md",
@@ -37,9 +45,11 @@ async function import_yinote(
         delete_permanently = false,
         delete_only_if_all_imported = false,
         oembed_registry_path = "scripts/oembed_registry.json",
-        oembed_registry_cache_days = 7) {
+        oembed_registry_cache_days = 7,
+        loglevel = LOGLEVEL_DEBUG) { // todo: info
 
     try {
+        CURRENT_LOG_LEVEL = loglevel;
         const yinote_link = find_json_link_in_md_content(tp.file.content);
         const yinote_path = get_path_for_link(yinote_link, tp);
         log(`importing '${yinote_path}'`);
@@ -64,30 +74,36 @@ async function import_yinote(
                 await save_all_images_to_directory(tp, yinote, save_images_to_directory);
             }
             log("yinote is ready for being inserted into the template:");
-            log(yinote, true);
+            log(yinote, LOGLEVEL_INFO, true);
             const md_content = populate_moustachelike_template(template, yinote);
             await write_content(md_content, tp);
             await rename_md_file(yinote, tp);
         }
         if(delete_json && (!delete_only_if_all_imported || yinote_json.data.length <= 1)) {
             await delete_file(yinote_path, delete_permanently);
-            log(`deleted '${yinote_path}'`);
-            show_obsidian_notification(tp, `Deleted\n'${yinote_path}'`);
         }
     } catch(e) {
-        log(e);
+        log(e, LOGLEVEL_ERROR);
         show_obsidian_notification(tp, e);
         return;
     }
 }
 
-function log(msg, raw = false) {
+function log(msg, level = LOGLEVEL_INFO, raw = false) {
+    if(level > CURRENT_LOG_LEVEL) {
+        return;
+    }
     if (raw) {
         console.log(msg);
-        return
+        return;
     }
     const time = moment().format("HH:mm:ss.SSS");
-    console.log(`${time} [import_yinote]: ${msg}`);
+    console.log(`${time} import_yinote [${get_loglevel_str(level)}]: ${msg}`);
+}
+
+function get_loglevel_str(level) {
+    const level_str = ["SILENT", "WARNING", "ERROR", "INFO", "DEBUG"];
+    return level_str[level];
 }
 
 function show_obsidian_notification(tp, msg) {
@@ -149,7 +165,7 @@ async function remove_already_imported_yinotes(yinote_json, yinote_id_frontmatte
     let i = yinote_json.data.length;
     while (i--) {
         if(await note_exists(yinote_id_frontmatter_key, yinote_json.data[i].id)) {
-            log(`already imported: '${yinote_json.data[i].meta.title}'`);
+            log(`already imported: '${yinote_json.data[i].meta.title}'`, LOGLEVEL_DEBUG);
             yinote_json.data.splice(i, 1);
         }
     }
@@ -198,14 +214,14 @@ async function get_oembed_url_for_yinote(yinote, tp, oembed_registry_path, oembe
     await download_oembed_registry_if_required(tp, oembed_registry_path, oembed_registry_cache_days);
     const url_from_registry = await create_oembed_url_from_registry(yinote, tp, oembed_registry_path);
     if(url_from_registry) {
-        log(`got oembed url from registry: ${url_from_registry}`);
+        log(`got oembed url from registry: ${url_from_registry}`, LOGLEVEL_DEBUG);
         return url_from_registry;
     }
     
-    log("starting oembed discovery");
+    log("starting oembed discovery", LOGLEVEL_DEBUG);
     const discovered_url = await get_oembed_url_from_discovery(yinote, tp);
     if(discovered_url) {
-        log(`got oembed url from discovery: ${discovered_url}`);
+        log(`got oembed url from discovery: ${discovered_url}`, LOGLEVEL_DEBUG);
         return discovered_url;
     }
 
@@ -235,11 +251,11 @@ async function download_oembed_registry_if_required(tp, oembed_registry_path, oe
         const now_timestamp = (+ new Date());
         const moment_last_updated = moment(stat.mtime);
         moment_last_updated.locale('en');
-        log(`oembed registry last updated: ${moment_last_updated.fromNow()}`);
-        log(`cache time for oembed registry: ${oembed_registry_cache_days} days`);
+        log(`oembed registry last updated: ${moment_last_updated.fromNow()}`, LOGLEVEL_DEBUG);
+        log(`cache time for oembed registry: ${oembed_registry_cache_days} days`, LOGLEVEL_DEBUG);
         const cache_days_ago_timestamp = now_timestamp - oembed_registry_cache_days * 24 * 3600;
         if(stat.mtime >= cache_days_ago_timestamp) {
-            log("oembed registry update not required");
+            log("oembed registry update not required", LOGLEVEL_DEBUG);
             return;
         }
     }
@@ -333,7 +349,7 @@ async function provide_local_url_copy_in_obj_for_key(tp, obj, key, filename, dow
     const url = obj[key];
     const normalized_path = await save_image_to_directory(tp, url, filename, download_dir);
     obj[`${key}_local`] = normalized_path;
-    log(`saved: ${normalized_path}`);
+    log(`saved: ${normalized_path}`, LOGLEVEL_DEBUG);
 }
 
 async function save_image_to_directory(tp, url, filename_without_ext, download_dir) {
@@ -380,7 +396,7 @@ function get_file_extension_from_http_url(url) {
 
 function get_file_extension_by_regex(ext_regex, url) {
     if(!ext_regex.test(url)) {
-        log(`unable to extract image type from url: ${url}`)
+        log(`unable to extract image type from url: ${url}`, LOGLEVEL_ERROR);
         throw "unable to extract image type from url";
     }
     const file_extension = ext_regex.exec(url)[1];
@@ -502,6 +518,7 @@ async function rename_md_file(yinote, tp) {
         await tp.file.rename(yinote.file_title);
         log(`file renamed to '${yinote.file_title}.md'`);
     } catch(e) {
+        log(`unable to rename file to '${yinote.file_title}.md'`, LOGLEVEL_ERROR);
         throw `Unable to rename the note:\n\n${e}`
     }
 }
@@ -510,8 +527,10 @@ async function delete_file(path, delete_permanently) {
     const abstractFile = await app.vault.getAbstractFileByPath(path);
     if(delete_permanently) {
         await app.vault.delete(abstractFile);
+        log(`permanently deleted: '${path}'`);
     } else {
         await app.vault.trash(abstractFile);
+        log(`moved to trash: '${path}'`);
     }
 }
 
