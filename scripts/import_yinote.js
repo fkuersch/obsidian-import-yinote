@@ -15,7 +15,6 @@ moment.js format: https://momentjs.com/docs/#/displaying/format/
 
 */
 
-// todo: template based on provider
 // todo: remove todos
 // todo: docs
 
@@ -29,7 +28,8 @@ let CURRENT_LOG_LEVEL = LOGLEVEL_INFO;
 
 async function import_yinote({
         tp,
-        note_template_path = "scripts/yinote_template.md",
+        default_template_path = "scripts/yinote_template.md",
+        note_template_path_by_provider = {},
         title_template = "{{#meta}}{{provider}} - {{/meta}}{{#oembed}}{{author_name}} - {{/oembed}}{{#meta}}{{title}}{{/meta}}",
         make_images_available_offline = true,
         images_directory = "",
@@ -60,7 +60,8 @@ async function import_yinote({
             const yinote = await let_user_select_note(tp, yinote_json);
             populate_yinote_with_created_time(yinote, custom_created_date_format);
             populate_yinote_with_timestamps(yinote);
-            const template = await get_template_from_file(note_template_path);
+            const template_path = select_template_path(yinote.meta.provider, default_template_path, note_template_path_by_provider);
+            const template = await get_template_from_file(template_path);
             if(template.includes("{{#oembed}}")) {
                 await populate_yinote_with_oembed_data(yinote, tp, oembed_registry_path, oembed_registry_cache_days);
             }
@@ -172,6 +173,16 @@ async function let_user_select_note(tp, j) {
         j.data, true, "");
     log(`user selected '${yinote.meta.title}'`);
     return yinote;
+}
+
+function select_template_path(note_provider, default_template_path, template_path_by_provider) {
+    const note_provider_lowercase = note_provider.toLowerCase();
+    for([template_provider, template_path] of Object.entries(template_path_by_provider)) {
+        if(template_provider.toLowerCase() === note_provider_lowercase) {
+            return template_path;
+        }
+    }
+    return default_template_path;
 }
 
 async function get_template_from_file(template_path) {

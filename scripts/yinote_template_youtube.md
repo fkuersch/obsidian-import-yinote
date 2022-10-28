@@ -3,7 +3,7 @@ created: {{createdAt_utc_isostring}}
 yinote_id: {{id}}
 {{#oembed}}author_name: {{author_name}}{{/oembed}}
 ---
-DEFAULT TEMPLATE
+YOUTUBE TEMPLATE
 {{#meta}}
 # {{title}}
 ![{{title}}]({{image_local}})
