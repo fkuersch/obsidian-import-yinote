@@ -156,24 +156,24 @@ Your `Import YiNote.md` is the place to configure the importer script. It will l
 
 For `<key>` and `<value>` there are the following options:
 
-| key                                     | value example                                                | Description                                                  |
-| --------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| tp                                      | tp                                                           | (required) This is the templater instance and must always be included |
-| default_template_path                   | "my_scripts_folder/default_yinote_template.md"               | The path of your default template. You only need to change this if your Templater scripts folder is not called `scripts` or if you rename `yinote_template.md`<br />Default: `"scripts/yinote_template.md"` |
-| note_template_path_by_provider          | {<br/>		"YouTube": "scripts/yinote_template_youtube.md",<br/>		"Vimeo": "scripts/yinote_template_vimeo.md"<br/>	} | A 'list' of different templates based on the provider (see above for details).<br />Default: `{}` |
-| title_template                          | "{{#meta}}{{provider}} - {{/meta}}{{#oembed}}{{author_name}} - {{/oembed}}{{#meta}}{{title}}{{/meta}}" | The template to use for the new file name. This follows the same syntax as the templates.<br />Default: see left |
-| make_images_available_offline           | false                                                        | In your template, you can use the `_local`version of an image to make the image available offline. When setting this option to `false`, you disable this feature completely.<br />Default: `true` |
-| images_directory                        | "resources/yinote"                                           | Save the attached images to this directory in your vault (directory must exist).<br />Default: `""`(your vault's root directory) |
-| conditional_image_keywords              | ["screenshot", "screen shot", "freeze frame", "still frame", "saveimage"] | When any of this keywords appear in your note, create a `conditional_image`object (see above for details)<br />Default: see left |
-| conditional_image_keywords_is_blacklist | true                                                         | Treat the keyword list above as a blacklist. A `conditional_image`object will be created by default but omitted if there's a keyword present.<br />Default: `false` |
-| yinote_id_frontmatter_key               | "my_custom_yinote_id"                                        | Search for this key in the frontmatter section of other notes for identifying already imported YiNotes (see above for details).<br />Default: `yinote_id` |
-| custom_created_date_format              | "YYYY-MM"                                                    | Create a `createdAt_customformat` string using this [moment.js format](https://momentjs.com/docs/#/displaying/format/).<br />Default: `"L LT"` |
-| delete_json                             | false                                                        | Delete the drag-and-dropped JSON file after import?<br />Default: `true` |
-| delete_permanently                      | true                                                         | Delete the JSON permanently (otherwise it will be moved to trash)? Only available, if `delete_json`is `true`.<br />Default: `false` |
-| delete_only_if_all_imported             | true                                                         | Delete the JSON only if all notes are imported? May come handy if you use scripts to further automate the import.<br />Default: `false` |
-| oembed_registry_path                    | "my_scripts_folder/oembed_registry.json"                     | Cache the oembed registry at this path. You only need to change this if your Templater scripts folder is not called `scripts.`<br />Default: `"scripts/oembed_registry.json"` |
-| oembed_registry_cache_days              | 3                                                            | Cache the oembed registry for this amount of days.<br />Default: `7` |
-| loglevel                                | 4                                                            | Increase/decrease the amount of messages logged to the developer console:<br />0: Silent<br />1: Error<br />2: Warning<br />3: Info<br />4: Debug<br />Default: `3` |
+| key                                     | Description                                                  |
+| --------------------------------------- | ------------------------------------------------------------ |
+| tp                                      | (required) This is the templater instance and must always be included<br />Example: `tp` |
+| default_template_path                   | The path of your default template. You only need to change this if your Templater scripts folder is not called `scripts` or if you rename `yinote_template.md`<br />Default: `"scripts/yinote_template.md"`<br />Example: `"my_scripts_folder/default_yinote_template.md"` |
+| note_template_path_by_provider          | A 'list' of different templates based on the provider (see above for details).<br />Default: `{}`<br />Example: see above |
+| title_template                          | The template to use for the new file name. This follows the same syntax as the templates.<br />Default: `"{{#meta}}{{provider}} - {{/meta}}{{#oembed}}{{author_name}} - {{/oembed}}{{#meta}}{{title}}{{/meta}}"` |
+| make_images_available_offline           | In your template, you can use the `_local`version of an image to make the image available offline. When setting this option to `false`, you disable this feature completely.<br />Default: `true` |
+| images_directory                        | Save the attached images to this directory in your vault (directory must exist).<br />Default: `""`(your vault's root directory)<br />Example: `"resources/yinote"` |
+| conditional_image_keywords              | When any of this keywords appear in your note, create a `conditional_image`object (see above for details)<br />Default: `["screenshot", "screen shot", "freeze frame", "still frame", "saveimage"]` |
+| conditional_image_keywords_is_blacklist | Treat the keyword list above as a blacklist. A `conditional_image`object will be created by default but omitted if there's a keyword present.<br />Default: `false` |
+| yinote_id_frontmatter_key               | Search for this key in the frontmatter section of other notes for identifying already imported YiNotes (see above for details).<br />Default: `yinote_id` |
+| custom_created_date_format              | Create a `createdAt_customformat` string using this [moment.js format](https://momentjs.com/docs/#/displaying/format/).<br />Default: `"L LT"`<br />Example: `"YYYY-MM"` |
+| delete_json                             | Delete the drag-and-dropped JSON file after import?<br />Default: `true` |
+| delete_permanently                      | Delete the JSON permanently (otherwise it will be moved to trash)? Only available, if `delete_json`is `true`.<br />Default: `false` |
+| delete_only_if_all_imported             | Delete the JSON only if all notes are imported? May come handy if you use scripts to further automate the import.<br />Default: `false` |
+| oembed_registry_path                    | Cache the oembed registry at this path. You only need to change this if your Templater scripts folder is not called `scripts.`<br />Default: `"scripts/oembed_registry.json"` |
+| oembed_registry_cache_days              | Cache the oembed registry for this amount of days.<br />Default: `7` |
+| loglevel                                | Increase/decrease the amount of messages logged to the developer console:<br />0: Silent<br />1: Error<br />2: Warning<br />3: Info<br />4: Debug<br />Default: `3` |
 
 
 
