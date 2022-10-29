@@ -23,7 +23,7 @@ https://user-images.githubusercontent.com/11154738/198824274-7c65aeb9-6c5c-4929-
 2. Copy `yinote_template.md` into your `scripts` folder*
 3. Copy `Import YiNote.md` into your `templates` folder*
 
-*Your folders may have different names. Check your Templater settings (`Template folder location` and `Script files folder location`) and adjust accordingly. You also need to adjust some config options (see below for details).
+*Your folders may have different names. Check your Templater settings (`Template folder location` and `Script files folder location`) and adjust accordingly. You also need to adjust some config options in `Import YiNote.md` ([see below for details](#in-my-templater-settings-script-files-folder-location-is-not-called-scripts)).
 
 ## Importing your first note
 
@@ -44,7 +44,7 @@ https://user-images.githubusercontent.com/11154738/198824274-7c65aeb9-6c5c-4929-
 
 ### In my Templater settings, `Script files folder location` is not called `scripts`
 
-If that's the case, you need to adjust the following config options:
+If that's the case, you need to adjust the following config options in `Import YiNote.md`:
 
 - `default_template_path`
 - `oembed_registry_path`
