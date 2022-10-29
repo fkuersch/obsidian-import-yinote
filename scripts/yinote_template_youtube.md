@@ -5,14 +5,17 @@ yinote_id: "{{id}}"
 {{#meta}}provider: "{{provider}}"{{/meta}}
 {{#meta}}title: "{{title}}"{{/meta}}
 {{#meta}}url: "{{url}}"{{/meta}}
-{{#oembed}}author_name: "youtube:{{author_name}}"{{/oembed}}
+{{#oembed}}author_name: "@ytch:{{author_name}}"{{/oembed}}
 ---
+Status: #📥 
+Tags: 
+Links: 
+___
 YOUTUBE TEMPLATE
-{{#meta}}
-# {{title}}
+{{#meta}}# {{title}}
 
 Video: [{{title}}]({{url}}){{/meta}}
-{{#oembed}}Channel: [{{author_name}}]({{author_url}}){{/oembed}}
+{{#oembed}}Channel: [{{author_name}}]({{author_url}}) [[@ytch:{{author_name}}]]{{/oembed}}
 {{#meta}}
 > {{description}}
 
