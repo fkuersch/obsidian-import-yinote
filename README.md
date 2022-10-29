@@ -61,6 +61,8 @@ To find the values that are available for utilization in your custom template, I
 
 ### Template examples
 
+> Note: You can find full examples in the [scripts](/scripts) folder in this repository.
+
 For example, if you want to insert the `meta.title`into your note, you'd write the following line in your template:
 
 ```markdown
