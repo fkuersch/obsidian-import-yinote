@@ -5,7 +5,7 @@ Import a [YiNote](https://github.com/shuowu/yi-note) into [Obsidian](https://obs
 
 - Use your own markdown template for importing your YiNotes
 - Use [oembed](https://oembed.com) metadata in your template
-- Save attached images to your vault
+- Download and save attached images to your vault
 - Only attach images with certain keywords appearing in the note
 
 https://user-images.githubusercontent.com/11154738/198824274-7c65aeb9-6c5c-4929-99b1-49fb1d062832.mp4
