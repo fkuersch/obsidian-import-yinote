@@ -8,6 +8,8 @@ Import a [YiNote](https://github.com/shuowu/yi-note) into [Obsidian](https://obs
 - Save attached images to your vault
 - Only attach images with certain keywords appearing in the note
 
+https://user-images.githubusercontent.com/11154738/198824274-7c65aeb9-6c5c-4929-99b1-49fb1d062832.mp4
+
 ## Setup
 
 ### Requirements
