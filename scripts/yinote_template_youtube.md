@@ -1,34 +1,28 @@
 ---
-created: {{createdAt_utc_isostring}}
-yinote_id: {{id}}
-{{#oembed}}author_name: {{author_name}}{{/oembed}}
+created: {{createdAt_date}}
+type: "yinote"
+yinote_id: "{{id}}"
+{{#meta}}provider: "{{provider}}"{{/meta}}
+{{#meta}}title: "{{title}}"{{/meta}}
+{{#meta}}url: "{{url}}"{{/meta}}
+{{#oembed}}author_name: "youtube:{{author_name}}"{{/oembed}}
 ---
 YOUTUBE TEMPLATE
 {{#meta}}
 # {{title}}
-![{{title}}]({{image_local}})
 
-Source: {{provider}} {{url}}
-Keywords: {{keywords}}
-{{/meta}}
-
-{{#oembed}}
-{{author_name}} {{author_url}}
-
-{{html}}
-{{/oembed}}
-
+Video: [{{title}}]({{url}}){{/meta}}
+{{#oembed}}Channel: [{{author_name}}]({{author_url}}){{/oembed}}
 {{#meta}}
-## Description
-```
-{{description}}
-```
+> {{description}}
+
+![{{title}}]({{image_local}})
 {{/meta}}
 
 ## My Notes
 {{#notes}}
 ### [{{time}}]({{timestampurl}})
-{{#conditional_image}}![frame]({{image_local}}){{/conditional_image}}
+{{#conditional_image}}![img]({{image_local}}){{/conditional_image}}
 {{content}}
 
 ---
