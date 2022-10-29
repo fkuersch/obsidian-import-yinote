@@ -55,7 +55,7 @@ The template used for creating the notes (found in `yinote_template.md`) uses a 
 
 To find the values that are available for utilization in your custom template, I recommend opening the developer console in Obsidian (`CTRL+SHIFT+I` or `CMD+ALT+I`) and importing a YiNote like documented above. In the console, you'll find a line `yinote is ready for being inserted into the template:`followed by the object that's being used in the template.
 
-![devconsole_example](docs/devconsole_example.png)
+<img src="https://user-images.githubusercontent.com/11154738/198821321-ce821a50-1b91-48bd-97df-b9a53bde862c.png" width="727" height="376" alt="devconsole_example.png">
 
 ### Template examples
 
@@ -117,7 +117,7 @@ You may only want to attach a still frame for particular timestamped notes. You 
 
 If there's one of the keywords present in your note, a `notes[].conditional_image` object will be created like so:
 
-![conditional_image_example](docs/conditional_image_example.png)
+<img src="https://user-images.githubusercontent.com/11154738/198821352-60a0f174-9852-4e93-a3ee-f3ce304e5521.png" width=679 height=467 alt="conditional_image_example.png">
 
 In your template, embedding a frame only if there's a keyword present, could look like this:
 
