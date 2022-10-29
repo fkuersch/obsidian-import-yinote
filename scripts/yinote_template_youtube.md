@@ -28,7 +28,7 @@ Keywords: {{keywords}}
 ## My Notes
 {{#notes}}
 ### [{{time}}]({{timestampurl}})
-{{#conditional_image}}![img]({{image_local}}){{/conditional_image}}
+{{#conditional_image}}![frame]({{image_local}}){{/conditional_image}}
 {{content}}
 
 ---

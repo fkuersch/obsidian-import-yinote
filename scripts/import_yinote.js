@@ -1,25 +1,11 @@
 /*
 version: 0.0.1
 source, docs & updates: https://github.com/fkuersch/obsidian-import-yinote
-
-docs:
-
-install:
-templater: enable js?!
-dataview
-
-oembed parameters: depending on provider, see: https://oembed.com/#section2.3
-cmd+alt+i -> dev console
-
-moment.js format: https://momentjs.com/docs/#/displaying/format/
-
 */
 
-// todo: docs
-
 const LOGLEVEL_SILENT = 0;
-const LOGLEVEL_WARNING = 1;
-const LOGLEVEL_ERROR = 2;
+const LOGLEVEL_ERROR = 1;
+const LOGLEVEL_WARNING = 2;
 const LOGLEVEL_INFO = 3;
 const LOGLEVEL_DEBUG = 4;
 let CURRENT_LOG_LEVEL = LOGLEVEL_INFO;
