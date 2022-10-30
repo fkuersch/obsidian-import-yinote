@@ -6,6 +6,7 @@ https://github.com/fkuersch/obsidian-import-yinote
 Changelog:
 0.0.3 (2022-10-30)
     fix: remove all illegal windows file name characters from the file name
+    fix: rename the file before writing the content, see issue #2
 0.0.2 (2022-10-30)
     fix: replace the pipe symbol (|) with a dash (-) in the file title, see issue #1
 0.0.1 (2022-10-29)
@@ -71,8 +72,8 @@ async function import_yinote({
             if(make_images_available_offline) {
                 await save_images_if_linked_in_page(tp, md_content, image_urls_by_local_path);
             }
-            await write_content(md_content, tp);
             await rename_md_file(yinote, tp);
+            await write_content(md_content, tp);
         }
         if(delete_json && (!delete_only_if_all_imported || yinote_json.data.length <= 1)) {
             await delete_file(yinote_path, delete_permanently);
