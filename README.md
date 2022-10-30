@@ -179,7 +179,17 @@ For `<key>` and `<value>` there are the following options:
 | oembed_registry_cache_days              | Cache the oembed registry for this amount of days.<br />Default: `7` |
 | loglevel                                | Increase/decrease the amount of messages logged to the developer console:<br />0: Silent<br />1: Error<br />2: Warning<br />3: Info<br />4: Debug<br />Default: `3` |
 
+## Compatibility with other plugins
 
+### Filename Heading Sync
+
+The Filename Heading Sync plugin automatically changes the file name based on the first heading of the file (and vice-versa).
+
+Since this script is based on Templater, you need to disable the **Use File Open Hook** in the settings.
+
+If your file name does not match the heading, you need to add an **Ignore Regex Rule** that matches your `title_template`, ie. `^\+.*`for file names that start with a `+`.
+
+Also, until [this bug](https://github.com/dvcrn/obsidian-filename-heading-sync/issues/64) is resolved, you need to add a Regex Rule that matches your default file name for new notes, ie. `^Untitled`. Both combined could look like `^Untitled|^\+.*`
 
 ---
 
