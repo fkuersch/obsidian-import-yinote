@@ -4,6 +4,8 @@ Source, Documentation & Updates:
 https://github.com/fkuersch/obsidian-import-yinote
 
 Changelog:
+0.0.3 (2022-10-30)
+    fix: remove all illegal windows file name characters from the file name
 0.0.2 (2022-10-30)
     fix: replace the pipe symbol (|) with a dash (-) in the file title, see issue #1
 0.0.1 (2022-10-29)
@@ -513,11 +515,16 @@ function compose_file_title(yinote, title_template) {
 }
 
 function sanitize_file_title(title) {
+    // list of illegal characters: https://stackoverflow.com/a/31976060
+    // this is also the list that obsidian shows on windows when trying
+    // to rename a file with one of these characters
+    log(`title: '${title}'`, LOGLEVEL_DEBUG);
+    const illegal_chars = ['/', '\\', '<', '>', ':', '|', '"', '?', '*'];
     let sanitized_title = title;
-    sanitized_title = sanitized_title.replaceAll("\\", "-");
-    sanitized_title = sanitized_title.replaceAll("/", "-");
-    sanitized_title = sanitized_title.replaceAll(":", "-");
-    sanitized_title = sanitized_title.replaceAll("|", "-");
+    for(const c of illegal_chars) {
+        sanitized_title = sanitized_title.replaceAll(c, "-");
+    }
+    log(`sanitized title: '${sanitized_title}'`, LOGLEVEL_DEBUG);
     return sanitized_title;
 }
 
