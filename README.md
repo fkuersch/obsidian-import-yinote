@@ -165,7 +165,7 @@ For `<key>` and `<value>` there are the following options:
 | tp                                      | (required) This is the templater instance and must always be included<br />Example: `tp` |
 | default_template_path                   | The path of your default template. You only need to change this if your Templater scripts folder is not called `scripts` or if you rename `yinote_template.md`<br />Default: `"scripts/yinote_template.md"`<br />Example: `"my_scripts_folder/default_yinote_template.md"` |
 | note_template_path_by_provider          | A 'list' of different templates based on the provider (see above for details).<br />Default: `{}`<br />Example: see above |
-| title_template                          | The template to use for the new file name. This follows the same syntax as the templates.<br />Default: `"{{#meta}}{{provider}} - {{/meta}}{{#oembed}}{{author_name}} - {{/oembed}}{{#meta}}{{title}}{{/meta}}"` |
+| filename_template                       | The template to use for the new file name. This follows the same syntax as the templates.<br />Default: `"{{#meta}}{{provider}} - {{/meta}}{{#oembed}}{{author_name}} - {{/oembed}}{{#meta}}{{title}}{{/meta}}"` |
 | make_images_available_offline           | In your template, you can use the `_local`version of an image to make the image available offline. When setting this option to `false`, you disable this feature completely.<br />Default: `true` |
 | images_directory                        | Save the attached images to this directory in your vault (directory must exist).<br />Default: `""`(your vault's root directory)<br />Example: `"resources/yinote"` |
 | conditional_image_keywords              | When any of this keywords appear in your note, create a `conditional_image`object (see above for details)<br />Default: `["screenshot", "screen shot", "freeze frame", "still frame", "saveimage"]` |
@@ -187,7 +187,7 @@ The Filename Heading Sync plugin automatically changes the file name based on th
 
 Since this script is based on Templater, you need to disable the **Use File Open Hook** in the settings.
 
-If your file name does not match the heading, you need to add an **Ignore Regex Rule** that matches your `title_template`, ie. `^\+.*`for file names that start with a `+`.
+If your file name does not match the heading, you need to add an **Ignore Regex Rule** that matches your `filename_template`, ie. `^\+.*`for file names that start with a `+`.
 
 Also, until [this bug](https://github.com/dvcrn/obsidian-filename-heading-sync/issues/64) is resolved, you need to add a Regex Rule that matches your default file name for new notes, ie. `^Untitled`. Both combined could look like `^Untitled|^\+.*`
 

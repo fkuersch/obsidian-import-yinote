@@ -7,8 +7,9 @@ Changelog:
 0.0.3 (2022-10-30)
     fix: remove all illegal windows file name characters from the file name
     fix: rename the file before writing the content, see issue #2
+    breaking change: renamed title_template to filename_template for clarity
 0.0.2 (2022-10-30)
-    fix: replace the pipe symbol (|) with a dash (-) in the file title, see issue #1
+    fix: replace the pipe symbol (|) with a dash (-) in the file name, see issue #1
 0.0.1 (2022-10-29)
     initial release
 */
@@ -25,7 +26,7 @@ async function import_yinote({
         tp,
         default_template_path = "scripts/yinote_template.md",
         note_template_path_by_provider = {},
-        title_template = "{{#meta}}{{provider}} - {{/meta}}{{#oembed}}{{author_name}} - {{/oembed}}{{#meta}}{{title}}{{/meta}}",
+        filename_template = "{{#meta}}{{provider}} - {{/meta}}{{#oembed}}{{author_name}} - {{/oembed}}{{#meta}}{{title}}{{/meta}}",
         make_images_available_offline = true,
         images_directory = "",
         conditional_image_keywords = ["screenshot", "screen shot", "freeze frame", "still frame", "saveimage"],
@@ -65,10 +66,10 @@ async function import_yinote({
                 image_urls_by_local_path = create_paths_for_local_images(tp, yinote, images_directory);
             }
             create_conditional_images_for_notes(yinote.notes, conditional_image_keywords, conditional_image_keywords_is_blacklist);
-            compose_file_title(yinote, title_template);
+            compose_filename(yinote, filename_template);
             log("yinote is ready for being inserted into the template:");
             log(yinote, LOGLEVEL_INFO, true);
-            const md_content = populate_moustachelike_template(template, yinote);
+            const md_content = populate_mustachelike_template(template, yinote);
             if(make_images_available_offline) {
                 await save_images_if_linked_in_page(tp, md_content, image_urls_by_local_path);
             }
@@ -449,7 +450,7 @@ function is_any_keyword_in_text(keyword_list, text) {
     return false;
 }
 
-function populate_moustachelike_template(template, yinote) {
+function populate_mustachelike_template(template, yinote) {
     log("populating template");
     return populate_section(template, yinote);
 }
@@ -510,23 +511,23 @@ function replace_substring(original, start, end, replacement) {
     return original.substring(0, start) + replacement + original.substring(end, original.length);
 }
 
-function compose_file_title(yinote, title_template) {
-    let file_title = populate_moustachelike_template(title_template, yinote);
-    yinote.file_title = sanitize_file_title(file_title);
+function compose_filename(yinote, filename_template) {
+    let filename = populate_mustachelike_template(filename_template, yinote);
+    yinote.filename = sanitize_filename(filename);
 }
 
-function sanitize_file_title(title) {
+function sanitize_filename(filename) {
     // list of illegal characters: https://stackoverflow.com/a/31976060
     // this is also the list that obsidian shows on windows when trying
     // to rename a file with one of these characters
-    log(`title: '${title}'`, LOGLEVEL_DEBUG);
+    log(`filename: '${filename}'`, LOGLEVEL_DEBUG);
     const illegal_chars = ['/', '\\', '<', '>', ':', '|', '"', '?', '*'];
-    let sanitized_title = title;
+    let sanitized_filename = filename;
     for(const c of illegal_chars) {
-        sanitized_title = sanitized_title.replaceAll(c, "-");
+        sanitized_filename = sanitized_filename.replaceAll(c, "-");
     }
-    log(`sanitized title: '${sanitized_title}'`, LOGLEVEL_DEBUG);
-    return sanitized_title;
+    log(`sanitized filename: '${sanitized_filename}'`, LOGLEVEL_DEBUG);
+    return sanitized_filename;
 }
 
 function populate_yinote_with_created_time(yinote, format) {
@@ -575,10 +576,10 @@ async function write_content(content, tp) {
 
 async function rename_md_file(yinote, tp) {
     try {
-        await tp.file.rename(yinote.file_title);
-        log(`file renamed to '${yinote.file_title}.md'`);
+        await tp.file.rename(yinote.filename);
+        log(`file renamed to '${yinote.filename}.md'`);
     } catch(e) {
-        log(`unable to rename file to '${yinote.file_title}.md'`, LOGLEVEL_ERROR);
+        log(`unable to rename file to '${yinote.filename}.md'`, LOGLEVEL_ERROR);
         throw `Unable to rename the note:\n\n${e}`
     }
 }
