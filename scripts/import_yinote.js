@@ -1,6 +1,13 @@
 /*
-version: 0.0.1
-source, docs & updates: https://github.com/fkuersch/obsidian-import-yinote
+Version: 0.0.2
+Source, Documentation & Updates:
+https://github.com/fkuersch/obsidian-import-yinote
+
+Changelog:
+0.0.2 (2022-10-30)
+    fix: replace the pipe symbol (|) with a dash (-) in the file title, see issue #1
+0.0.1 (2022-10-29)
+    initial release
 */
 
 const LOGLEVEL_SILENT = 0;
@@ -510,6 +517,7 @@ function sanitize_file_title(title) {
     sanitized_title = sanitized_title.replaceAll("\\", "-");
     sanitized_title = sanitized_title.replaceAll("/", "-");
     sanitized_title = sanitized_title.replaceAll(":", "-");
+    sanitized_title = sanitized_title.replaceAll("|", "-");
     return sanitized_title;
 }
 
