@@ -3,7 +3,7 @@ created: {{createdAt_date}}
 type: "yinote"
 yinote_id: "{{id}}"
 {{#meta}}provider: "{{provider}}"{{/meta}}
-{{#oembed}}author: "@ytch:{{author_name}}"{{/oembed}}
+{{#oembed}}author: "@ytch_{{author_name}}"{{/oembed}}
 {{#meta}}title: "{{title}}"{{/meta}}
 {{#meta}}url: "{{url}}"{{/meta}}
 ---
@@ -16,7 +16,7 @@ YOUTUBE TEMPLATE
 
 Video Link: [{{title}}]({{url}}){{/meta}}
 {{#oembed}}Channel Link: [{{author_name}}]({{author_url}})
-Author: [[@ytch:{{author_name}}]]{{/oembed}}
+Author: [[@ytch_{{author_name}}]]{{/oembed}}
 {{#meta}}
 > [!abstract]+ Video Description
 > {{description}}
